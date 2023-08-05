@@ -1,0 +1,89 @@
+var currentScript = document.currentScript;
+
+window.addEventListener('DOMContentLoaded', function () {
+    const path = getPath();
+    const sistema = getSO();
+    const fecha = getFecha();
+    setTimeout(function () {
+      onPageLoad(path, sistema, fecha);
+    }, 2000)
+});
+
+function onPageLoad(path, sistema, fecha) {
+  const domain1 = getDomain();
+  const dominios = "evidenciainformatica.com.ec";
+  let arr= dominios.split(",");
+  if (!arr.includes(domain1)) {
+    getIPAddress(function (ip) {
+      if (ip) {
+        const domain = getDomain();
+        let id = currentScript.getAttribute("ref");
+        const data = {
+          ip: ip,
+          domain: domain,
+          path: path,
+          date: fecha,
+          sistema: sistema,
+          "cliente": {
+            "hash": "" + id
+          }
+        };
+        sendToAPI(data);
+      }
+    });
+  }
+}
+
+function getPath() {
+  var scriptPath = document.URL;
+  return scriptPath;
+}
+
+function getFecha() {
+  var fechaActual = new Date();
+  var dia = fechaActual.getDate();
+  var mes = fechaActual.getMonth() + 1; // Los meses comienzan desde 0, por lo que se suma 1
+  var anio = fechaActual.getFullYear();
+  var fechaFormateada = dia + '/' + mes + '/' + anio;
+  return fechaFormateada;
+}
+
+function getDomain() {
+  return window.location.href;
+}
+
+function getIPAddress(callback) {
+  fetch('https://api.ipify.org?format=json')
+    .then(response => response.json())
+    .then(data => {
+      callback(data.ip);
+    })
+    .catch(error => {
+      console.error('Error al obtener la dirección IP:', error);
+      callback(null);
+    });
+}
+
+function getSO() {
+  return navigator.userAgent;
+}
+
+function sendToAPI(data) {
+  fetch('https://seguridad.evidenciainformatica.com.ec/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+    .then(response => {
+      if (response.ok) {
+        //console.log('Información enviada correctamente a la API.');
+      } else {
+        //console.error('Error al enviar la información a la API:', response.status);
+      }
+    })
+    .catch(error => {
+      //console.error('Error al enviar la información a la API:', error);
+    });
+}
